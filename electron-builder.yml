@@ -1,0 +1,24 @@
+appId: ma.cabinet.dentaire
+productName: Cabinet Dentaire
+directories:
+  buildResources: resources
+  output: release
+files:
+  - out/**
+  - package.json
+  - "!**/*.map"
+extraResources:
+  - from: prisma/migrations
+    to: migrations
+asarUnpack:
+  - "**/node_modules/@libsql/**"
+  - "**/node_modules/libsql/**"
+win:
+  target: [nsis]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: Cabinet Dentaire
+  language: "1036"
