@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { UserPlus } from "lucide-react";
 import { GENDERS } from "@shared/constants";
 import { patientSchema } from "@shared/schemas";
@@ -40,6 +40,7 @@ export function PatientForm({ patient, onDone, onCancel }: { patient?: PatientVa
 
 export function PatientsPage() {
   const { can } = useAuth();
+  const go = useNavigate();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"active" | "archived" | "all">("active");
   const [gender, setGender] = useState("");
@@ -48,7 +49,7 @@ export function PatientsPage() {
   const [creating, setCreating] = useState(false);
   const term = useDebounced(q);
   const pageSize = 15;
-  const { data, error, reload } = useLoad(() => api.patients.list({ q: term, status, gender: (gender || undefined) as never, withBalance: withBalance || undefined, page, pageSize }), [term, status, gender, withBalance, page]);
+  const { data, error } = useLoad(() => api.patients.list({ q: term, status, gender: (gender || undefined) as never, withBalance: withBalance || undefined, page, pageSize }), [term, status, gender, withBalance, page]);
   const reset = (fn: () => void) => {
     fn();
     setPage(1);
@@ -104,7 +105,7 @@ export function PatientsPage() {
         <Pagination page={page} pageSize={pageSize} total={data?.total ?? 0} onChange={setPage} />
       </Card>
       <Modal open={creating} onClose={() => setCreating(false)} title="Nouveau patient" wide>
-        <PatientForm onCancel={() => setCreating(false)} onDone={() => { setCreating(false); reload(); }} />
+        <PatientForm onCancel={() => setCreating(false)} onDone={(id) => { setCreating(false); go(`/patients/${id}`); }} />
       </Modal>
     </div>
   );

@@ -1,6 +1,6 @@
 // Parcours complet dans la vraie application Electron, sur un dossier de données temporaire.
 // Lancer après `npm run build` : node tests/e2e.mjs
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron as electron } from "playwright-core";
@@ -48,7 +48,6 @@ try {
   await fill("firstName", "Patient");
   await win.getByRole("button", { name: "Enregistrer" }).click();
   await win.getByText("Patient créé").waitFor({ timeout: 8000 });
-  await win.getByRole("link", { name: "Vrai Patient" }).click();
   await win.getByRole("heading", { name: /Vrai Patient/ }).waitFor();
   await win.getByRole("button", { name: "Odontogramme" }).click();
   await win.locator('[aria-label^="Dent 16"]').click();
@@ -64,6 +63,25 @@ try {
     await win.waitForTimeout(300);
     await shot(`onglet_${t.replace(/\W+/g, "_")}`);
   }
+  // Vrai PDF et vrai coffre Windows : seul le dialogue d'enregistrement est remplacé
+  const pdfPath = join(userData, "fiche-test.pdf");
+  await app.evaluate(({ dialog, shell }, path) => {
+    dialog.showSaveDialog = async () => ({ filePath: path });
+    shell.openPath = async () => "";
+  }, pdfPath);
+  await win.getByRole("button", { name: "Fiche patient PDF" }).click();
+  await win.getByRole("cell", { name: "Fiche Vrai Patient" }).waitFor({ timeout: 15000 });
+  if (readFileSync(pdfPath).subarray(0, 4).toString() !== "%PDF") throw new Error("PDF invalide");
+
+  await nav("Paramètres", "Paramètres");
+  await win.locator('input[autocomplete="new-password"]').fill("phrase secrete longue");
+  await win.getByRole("button", { name: "Enregistrer", exact: true }).nth(1).click();
+  await win.getByText("Configuration enregistrée").waitFor({ timeout: 8000 });
+  await win.getByRole("button", { name: "Sauvegarder maintenant" }).click();
+  await win.getByText("Sauvegarde créée").waitFor({ timeout: 20000 });
+  await win.getByRole("cell", { name: /sauvegarde-.*cdbak/ }).first().waitFor({ timeout: 8000 });
+  await shot("sauvegarde");
+
   await nav("Rendez-vous", "Rendez-vous");
   await nav("Consultations", "Consultations");
   await nav("Traitements", "Catalogue des traitements");
@@ -86,6 +104,7 @@ try {
   await w2.getByRole("button", { name: "Se connecter" }).click();
   await w2.getByRole("heading", { name: "Tableau de bord" }).waitFor({ timeout: 15000 });
   await w2.locator("aside").getByRole("link", { name: "Patients", exact: true }).click();
+  await w2.locator('input[placeholder^="Nom, téléphone"]').fill("Vrai");
   await w2.getByRole("link", { name: "Vrai Patient" }).waitFor({ timeout: 8000 });
   await again.close();
   console.log(`OK. Problèmes console : ${problems.length}`);
