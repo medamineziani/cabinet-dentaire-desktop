@@ -23,6 +23,7 @@ Installation chez le cabinet : voir [INSTALLATION.md](INSTALLATION.md).
 | `npm run typecheck` | vérification TypeScript |
 | `npm test` | 22 tests d'intégration des règles métier |
 | `npm run build` puis `node tests/e2e.mjs` | parcours complet dans la vraie application |
+| `node tests/e2e-extra.mjs` | déplacement de rendez-vous, restauration, vues secrétaire |
 | `npm run dist` | installateur Windows dans `release/` |
 
 ## Architecture
